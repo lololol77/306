@@ -5,23 +5,16 @@ import random
 st.set_page_config(layout="wide")
 st.title("🎯 진짜 사다리타기 시뮬레이션")
 
-# 사용자 설정: 참가자 수
-num_people = st.slider("참가자 수 선택", min_value=2, max_value=30, value=5)
-
-# 사용자 설정: 참가자 이름 입력
-participant_input = st.text_area("참가자 이름 입력 (쉼표로 구분)", value=','.join([f"{i+1}번" for i in range(num_people)]))
-participants = [name.strip() for name in participant_input.split(',') if name.strip()]
-
-if len(participants) != num_people:
-    st.error(f"참가자 수({len(participants)})가 슬라이더에서 선택한 수({num_people})와 일치하지 않습니다.")
-    st.stop()
+# 사용자 설정: 학생 수만 입력
+num_people = st.slider("학생 수 선택", min_value=2, max_value=30, value=5)
+participants = [str(i+1) for i in range(num_people)]  # 단순 번호 목록
 
 # 사용자 설정: 결과 항목 입력
 result_input = st.text_input("결과 숫자 또는 항목 입력 (쉼표로 구분)", value=','.join([str(i+1) for i in range(num_people)]))
 results = [r.strip() for r in result_input.split(',') if r.strip()]
 
 if len(results) != num_people:
-    st.error(f"결과 항목 수({len(results)})가 참가자 수({num_people})와 일치하지 않습니다.")
+    st.error(f"결과 항목 수({len(results)})가 학생 수({num_people})와 일치하지 않습니다.")
     st.stop()
 
 # 사다리 구조 생성
@@ -77,11 +70,9 @@ if st.button("🎲 사다리 타기 결과 보기"):
             x1, y1 = path[i + 1]
             ax.plot([x0, x1], [y0, y1], color='blue', alpha=0.3, linewidth=2)
 
-    for i, name in enumerate(participants):
-        ax.text(i, rows + 1.5, name, ha='center', va='bottom', fontsize=10, rotation=90)
-
+    # 결과 숫자 크게 표시
     for i, res in enumerate(results):
-        ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=10, rotation=90)
+        ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=16, fontweight='bold')
 
     ax.set_xlim(-1, columns)
     ax.set_ylim(-2, rows + 3)
@@ -90,4 +81,4 @@ if st.button("🎲 사다리 타기 결과 보기"):
 
     st.subheader("🔢 사다리타기 결과")
     for name in sorted(final_mapping):
-        st.write(f"**{name}** → **{final_mapping[name]}**")
+        st.write(f"학생 {name} → **{final_mapping[name]}**")
