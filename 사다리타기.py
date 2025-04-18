@@ -70,7 +70,11 @@ if st.button("🎲 사다리 타기 결과 보기"):
             x1, y1 = path[i + 1]
             ax.plot([x0, x1], [y0, y1], color='blue', alpha=0.3, linewidth=2)
 
-    # 결과 숫자 크게 표시
+    # 사다리 윗쪽 학생 번호 표시
+    for i in range(num_people):
+        ax.text(i, rows + 1.5, str(i + 1), ha='center', va='bottom', fontsize=14, fontweight='bold')
+
+    # 결과 숫자 크게 표시 (아래쪽)
     for i, res in enumerate(results):
         ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=16, fontweight='bold')
 
