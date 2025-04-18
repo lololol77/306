@@ -2,27 +2,27 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import random
 
+st.set_page_config(layout="wide")
 st.title("🎯 진짜 사다리타기 시뮬레이션")
 
 # 사용자 설정: 참가자 수
-num_people = st.slider("참가자 수 선택", min_value=2, max_value=30, value=23)
+num_people = st.slider("참가자 수 선택", min_value=2, max_value=30, value=5)
 
-# 사용자 설정: 결과 숫자 입력
-default_numbers = list(range(47, 68)) + [97, 98]
-result_input = st.text_input("배정할 숫자들 입력 (쉼표로 구분)", value=','.join(map(str, default_numbers)))
+# 사용자 설정: 참가자 이름 입력
+participant_input = st.text_area("참가자 이름 입력 (쉼표로 구분)", value=','.join([f"{i+1}번" for i in range(num_people)]))
+participants = [name.strip() for name in participant_input.split(',') if name.strip()]
 
-try:
-    results = [int(x.strip()) for x in result_input.split(',') if x.strip().isdigit()]
-    if len(results) != num_people:
-        st.error(f"❌ 숫자의 개수({len(results)})가 참가자 수({num_people})와 다릅니다!")
-        st.stop()
-except ValueError:
-    st.error("❌ 숫자 형식이 잘못되었습니다. 숫자만 쉼표로 구분해서 입력해주세요.")
+if len(participants) != num_people:
+    st.error(f"참가자 수({len(participants)})가 슬라이더에서 선택한 수({num_people})와 일치하지 않습니다.")
     st.stop()
 
-# 참가자 이름 자동 생성
-participants = [f"{i+1}번" for i in range(num_people)]
-random.shuffle(results)
+# 사용자 설정: 결과 항목 입력
+result_input = st.text_input("결과 숫자 또는 항목 입력 (쉼표로 구분)", value=','.join([str(i+1) for i in range(num_people)]))
+results = [r.strip() for r in result_input.split(',') if r.strip()]
+
+if len(results) != num_people:
+    st.error(f"결과 항목 수({len(results)})가 참가자 수({num_people})와 일치하지 않습니다.")
+    st.stop()
 
 # 사다리 구조 생성
 columns = num_people
@@ -36,7 +36,7 @@ for r in range(rows):
             ladder[r][c] = 1
             ladder[r][c+1] = -1
 
-# 사다리 타기 경로 추적
+# 사다리 타기 경로 시뮬레이션
 def simulate_path(start_col):
     path = [(start_col, 0)]
     col = start_col
@@ -48,47 +48,46 @@ def simulate_path(start_col):
         path.append((col, r + 1))
     return col, path
 
-# 참가자별 결과 매핑 및 경로 저장
-final_mapping = {}
-all_paths = []
-for i in range(num_people):
-    end_col, path = simulate_path(i)
-    final_mapping[participants[i]] = results[end_col]
-    all_paths.append(path)
+# 버튼 누를 때 실행
+if st.button("🎲 사다리 타기 결과 보기"):
+    random.shuffle(results)  # 버튼 누를 때마다 shuffle
+    final_mapping = {}
+    all_paths = []
 
-# 시각화
-fig, ax = plt.subplots(figsize=(12, 16))
+    for i in range(num_people):
+        end_col, path = simulate_path(i)
+        final_mapping[participants[i]] = results[end_col]
+        all_paths.append(path)
 
-# 세로줄
-for c in range(columns):
-    ax.plot([c, c], [0, rows], color='black', linewidth=1)
+    # 시각화
+    fig, ax = plt.subplots(figsize=(num_people, 15))
 
-# 가로줄
-for r in range(rows):
-    for c in range(columns - 1):
-        if ladder[r][c] == 1:
-            ax.plot([c, c+1], [r, r], color='gray', linewidth=1.5)
+    for c in range(columns):
+        ax.plot([c, c], [0, rows], color='black', linewidth=1)
 
-# 강조: 경로 시뮬레이션 (굵은 파란선)
-for path in all_paths:
-    for i in range(len(path) - 1):
-        x0, y0 = path[i]
-        x1, y1 = path[i + 1]
-        ax.plot([x0, x1], [y0, y1], color='blue', alpha=0.3, linewidth=2)
+    for r in range(rows):
+        for c in range(columns - 1):
+            if ladder[r][c] == 1:
+                ax.plot([c, c+1], [r, r], color='gray', linewidth=1.5)
 
-# 참가자/결과 텍스트
-for i, name in enumerate(participants):
-    ax.text(i, rows + 1, name, ha='center', va='bottom', fontsize=9, rotation=90)
+    # 강조 경로
+    for path in all_paths:
+        for i in range(len(path) - 1):
+            x0, y0 = path[i]
+            x1, y1 = path[i + 1]
+            ax.plot([x0, x1], [y0, y1], color='blue', alpha=0.3, linewidth=2)
 
-for i, res in enumerate(results):
-    ax.text(i, -1, str(res), ha='center', va='top', fontsize=9, rotation=90)
+    for i, name in enumerate(participants):
+        ax.text(i, rows + 1.5, name, ha='center', va='bottom', fontsize=10, rotation=90)
 
-ax.set_xlim(-1, columns)
-ax.set_ylim(-2, rows + 2)
-ax.axis('off')
-st.pyplot(fig)
+    for i, res in enumerate(results):
+        ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=10, rotation=90)
 
-# 결과 출력
-st.subheader("🔢 사다리타기 결과")
-for name in sorted(final_mapping):
-    st.write(f"{name} → {final_mapping[name]}")
+    ax.set_xlim(-1, columns)
+    ax.set_ylim(-2, rows + 3)
+    ax.axis('off')
+    st.pyplot(fig)
+
+    st.subheader("🔢 사다리타기 결과")
+    for name in sorted(final_mapping):
+        st.write(f"**{name}** → **{final_mapping[name]}**")
