@@ -1,5 +1,5 @@
 import streamlit as st
-import matplotlib
+import matplotlib.pyplot as plt
 import random
 
 st.title("🎯 진짜 사다리타기 시뮬레이션")
