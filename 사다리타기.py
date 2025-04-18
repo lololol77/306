@@ -41,48 +41,56 @@ def simulate_path(start_col):
         path.append((col, r + 1))
     return col, path
 
-# 버튼 누를 때 실행
-if st.button("🎲 사다리 타기 결과 보기"):
-    random.shuffle(results)  # 버튼 누를 때마다 shuffle
-    final_mapping = {}
-    all_paths = []
+# 경로 계산
+all_paths = []
+final_mapping = {}
+random.shuffle(results)
 
-    for i in range(num_people):
-        end_col, path = simulate_path(i)
-        final_mapping[participants[i]] = results[end_col]
-        all_paths.append(path)
+for i in range(num_people):
+    end_col, path = simulate_path(i)
+    final_mapping[participants[i]] = results[end_col]
+    all_paths.append(path)
 
-    # 시각화
-    fig, ax = plt.subplots(figsize=(num_people, 15))
+# 학생별 경로 색상
+color_palette = plt.cm.get_cmap('tab20', num_people)
 
-    for c in range(columns):
-        ax.plot([c, c], [0, rows], color='black', linewidth=1)
+# 슬라이더로 몇 번째 학생까지 보여줄지 제어
+selected_index = st.slider("몇 번째 학생까지 내려가볼까요?", min_value=1, max_value=num_people, value=1)
 
-    for r in range(rows):
-        for c in range(columns - 1):
-            if ladder[r][c] == 1:
-                ax.plot([c, c+1], [r, r], color='gray', linewidth=1.5)
+# 시각화
+fig, ax = plt.subplots(figsize=(num_people, 15))
 
-    # 강조 경로
-    for path in all_paths:
-        for i in range(len(path) - 1):
-            x0, y0 = path[i]
-            x1, y1 = path[i + 1]
-            ax.plot([x0, x1], [y0, y1], color='blue', alpha=0.3, linewidth=2)
+for c in range(columns):
+    ax.plot([c, c], [0, rows], color='black', linewidth=1)
 
-    # 사다리 윗쪽 학생 번호 표시
-    for i in range(num_people):
-        ax.text(i, rows + 1.5, str(i + 1), ha='center', va='bottom', fontsize=14, fontweight='bold')
+for r in range(rows):
+    for c in range(columns - 1):
+        if ladder[r][c] == 1:
+            ax.plot([c, c+1], [r, r], color='gray', linewidth=1.5)
 
-    # 결과 숫자 크게 표시 (아래쪽)
-    for i, res in enumerate(results):
-        ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=16, fontweight='bold')
+# 강조 경로 (선택된 학생까지만, 각자 다른 색으로)
+for idx in range(selected_index):
+    path = all_paths[idx]
+    color = color_palette(idx)
+    for i in range(len(path) - 1):
+        x0, y0 = path[i]
+        x1, y1 = path[i + 1]
+        ax.plot([x0, x1], [y0, y1], color=color, alpha=0.7, linewidth=2.5)
 
-    ax.set_xlim(-1, columns)
-    ax.set_ylim(-2, rows + 3)
-    ax.axis('off')
-    st.pyplot(fig)
+# 사다리 윗쪽 학생 번호 표시
+for i in range(num_people):
+    ax.text(i, rows + 1.5, str(i + 1), ha='center', va='bottom', fontsize=14, fontweight='bold')
 
-    st.subheader("🔢 사다리타기 결과")
-    for name in sorted(final_mapping):
-        st.write(f"학생 {name} → **{final_mapping[name]}**")
+# 결과 숫자 크게 표시 (아래쪽)
+for i, res in enumerate(results):
+    ax.text(i, -1.5, str(res), ha='center', va='top', fontsize=16, fontweight='bold')
+
+ax.set_xlim(-1, columns)
+ax.set_ylim(-2, rows + 3)
+ax.axis('off')
+st.pyplot(fig)
+
+# 선택된 학생까지만 결과 표시
+st.subheader("🔢 사다리타기 결과")
+for i in range(selected_index):
+    st.write(f"학생 {participants[i]} → **{final_mapping[participants[i]]}**")
